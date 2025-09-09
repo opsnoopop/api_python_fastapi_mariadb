@@ -1,0 +1,13 @@
+.DS_Store
+.dockerignore
+.git
+.gitignore
+Dockerfile
+README.md
+docker-compose.yml
+k6/
+mariadb/
+mariadb_initdb/
+sysbench/
+wrk/
+*.sh

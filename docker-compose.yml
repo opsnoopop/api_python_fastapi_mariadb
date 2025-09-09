@@ -1,0 +1,61 @@
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: fastapi-mysql:py312
+    container_name: container_python
+    restart: always
+    ports:
+      - "80:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      network_optest:
+        ipv4_address: 172.16.0.11
+
+  database:
+    image: mariadb:lts-ubi9
+    container_name: container_mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: testdb
+      MARIADB_USER: testuser
+      MARIADB_PASSWORD: testpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb:/var/lib/mysql
+      - ./mariadb_initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      network_optest:
+        ipv4_address: 172.16.0.12
+
+  adminer:
+    image: adminer:5-standalone
+    container_name: container_adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+    networks:
+      network_optest:
+        ipv4_address: 172.16.0.13
+
+networks:
+  network_optest:
+    name: global_optest
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/24
